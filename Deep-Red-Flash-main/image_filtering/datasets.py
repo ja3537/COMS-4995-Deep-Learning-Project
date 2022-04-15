@@ -50,7 +50,7 @@ class RedFlashDataset(Dataset):
             gauss = utils.generateGaussNoise(im, 0, var)
             noise_im = utils.validate_im( im + gauss )
         
-        guide = im[:,:,0]
+        guide = (im[:,:,0] + im[:,:,1] + im[:,:,2]) / 3
         if self.is_cropped:
             guide = utils.modulate(guide)             # guided signal modulation
         

@@ -129,76 +129,76 @@ class UpsampleConvLayer(torch.nn.Module):
         return out
     
 
-train_dataset = RedFlashDataset('training_data/', True)
-train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
-                                           batch_size=16,
-                                           shuffle=True,
-                                           num_workers=4)
+if __name__ == '__main__':
+    train_dataset = RedFlashDataset('C:\\Users\\Michael\\Documents\\COMS-4995-Deep-Learning-Project\\train1\\', True)
+    train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
+                                               batch_size=16,
+                                               shuffle=True, num_workers=6)
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-imageFilter = MFFNet().to(device).float()
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    imageFilter = MFFNet().to(device).float()
 
-# Initializing VGG16 model for perceptual loss
-VGG = Vgg16(requires_grad=False)
-VGG = VGG.to(device)
-
-
-num_epochs = 600
-learning_rate = 1e-4
-
-criterion_img = nn.MSELoss()
-criterion_vgg = nn.MSELoss()
-
-optimizer = torch.optim.Adam(imageFilter.parameters(), lr=learning_rate)
-total_step = len(train_loader)
+    # Initializing VGG16 model for perceptual loss
+    VGG = Vgg16(requires_grad=False)
+    VGG = VGG.to(device)
 
 
-start_time = time.time()
-for epoch in range(num_epochs):
-    loss_tol = 0
-    loss_tol_vgg  = 0
-    loss_tol_l2   = 0
-    
-    if epoch == 300:
-        learning_rate = 1e-5
-        for param_group in optimizer.param_groups:
-            param_group['lr'] = learning_rate
+    num_epochs = 600
+    learning_rate = 1e-4
+
+    criterion_img = nn.MSELoss()
+    criterion_vgg = nn.MSELoss()
+
+    optimizer = torch.optim.Adam(imageFilter.parameters(), lr=learning_rate)
+    total_step = len(train_loader)
+
+
+    start_time = time.time()
+    for epoch in range(num_epochs):
+        loss_tol = 0
+        loss_tol_vgg  = 0
+        loss_tol_l2   = 0
         
-    if epoch == 600:
-        learning_rate = 1e-6
-        for param_group in optimizer.param_groups:
-            param_group['lr'] = learning_rate
-    
-    for i, im in enumerate(train_loader):
-        inputs = im[0].float().to(device)
-        target = im[1].float().to(device)
+        if epoch == 300:
+            learning_rate = 1e-5
+            for param_group in optimizer.param_groups:
+                param_group['lr'] = learning_rate
+            
+        if epoch == 600:
+            learning_rate = 1e-6
+            for param_group in optimizer.param_groups:
+                param_group['lr'] = learning_rate
         
-        outputs = imageFilter(inputs)
-        
-        loss_l2 = criterion_img( outputs, target )
-        
-        outputs_n = utils.normalize_ImageNet_stats(outputs)
-        target_n  = utils.normalize_ImageNet_stats(target)
-        
-        feature_o = VGG(outputs_n, 3)
-        feature_t = VGG(target_n, 3)
-        VGG_loss = []
-        for l in range(3+1):
-            VGG_loss.append( criterion_vgg(feature_o[l], feature_t[l]) )
-        
-        loss_vgg = sum(VGG_loss)
-        loss = loss_l2 + 0.01*loss_vgg
-    
-        loss_tol += loss.item()
-        
-        loss_tol_vgg  += loss_vgg
-        loss_tol_l2   += loss_l2
-        
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-    
-    print ( 'Epoch [{}/{}], Training Loss: {:.4f}, vgg Loss: {:.4f}, L2 Loss: {:.4f}' .format(epoch+1, num_epochs, loss_tol, loss_tol_vgg, loss_tol_l2) )
+        for i, im in enumerate(train_loader):
+            inputs = im[0].float().to(device)
+            target = im[1].float().to(device)
+            
+            outputs = imageFilter(inputs)
+            
+            loss_l2 = criterion_img( outputs, target )
+            
+            outputs_n = utils.normalize_ImageNet_stats(outputs)
+            target_n  = utils.normalize_ImageNet_stats(target)
+            
+            feature_o = VGG(outputs_n, 3)
+            feature_t = VGG(target_n, 3)
+            VGG_loss = []
 
-print("--- %0.4f seconds ---" % (time.time() - start_time)) 
-torch.save(imageFilter.state_dict(), 'MFF-net.ckpt')
+            for l in range(3+1):
+                VGG_loss.append( criterion_vgg(feature_o[l], feature_t[l]) )
+            loss_vgg = sum(VGG_loss)
+            loss = loss_l2 + 0.01*loss_vgg
+        
+            loss_tol += loss.item()
+            
+            loss_tol_vgg  += loss_vgg
+            loss_tol_l2   += loss_l2
+            
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+        
+        print ( 'Epoch [{}/{}], Training Loss: {:.4f}, vgg Loss: {:.4f}, L2 Loss: {:.4f}' .format(epoch+1, num_epochs, loss_tol, loss_tol_vgg, loss_tol_l2) )
+
+    print("--- %0.4f seconds ---" % (time.time() - start_time)) 
+    torch.save(imageFilter.state_dict(), 'MFF-net-rgb-2.ckpt')
