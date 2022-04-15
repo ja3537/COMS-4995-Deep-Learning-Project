@@ -143,7 +143,7 @@ class UpsampleConvLayer(torch.nn.Module):
 
 class AttentionBlock(torch.nn.Module):
     
-    def __int__(self, Fg, Fl, Fint):
+    def __init__(self, Fg, Fl, Fint):
         super(AttentionBlock, self).__init__()               
         self.Wg = nn.Sequential(ConvLayer(Fg, Fint, kernel_size=3, stride=1), nn.BatchNorm2d(Fint))
         self.Wx = nn.Sequential(ConvLayer(Fl, Fint, kernel_size=3, stride=1), nn.BatchNorm2d(Fint))
