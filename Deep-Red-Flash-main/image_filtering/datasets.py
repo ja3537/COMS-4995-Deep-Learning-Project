@@ -21,7 +21,8 @@ class RedFlashDataset(Dataset):
             if file[0]!='.':
                 filename = os.path.join( data_root, file )
                 #                self.fileID.append(file)
-                self.fileID.append(filename)
+                if filename[-7:-4] == "rgb":
+                    self.fileID.append(filename)
 
     def __getitem__(self, idx):
         filename = self.fileID[idx]
@@ -49,8 +50,29 @@ class RedFlashDataset(Dataset):
             var = random.randint(100,2000)/10000
             gauss = utils.generateGaussNoise(im, 0, var)
             noise_im = utils.validate_im( im + gauss )
+
+
+    #########
+        noise_im = noise_im / 3
+        guided = im[:,:,0]
+        gauss = utils.generateGaussNoise(np.array([guided]), 0, var)
+        guided = np.transpose(utils.validate_im(guided + gauss),(1,2,0))[:,:,0]
+        guide = utils.modulate(guided) / 3
+
+
+    #########
         
-        guide = (im[:,:,0] + im[:,:,1] + im[:,:,2]) / 3
+        # guide = (im[:,:,0] + im[:,:,1] + im[:,:,2]) / 3
+        # guideimagefilename = filename.replace("rgb", "380_a")
+        # guideimage = io.imread(guideimagefilename)
+        # if ( np.max(guideimage) <= 256 ):
+        #     guideimage = guideimage / 255
+        # else:
+        #     print("The image format is not correct. --> %d (supposed to be in [0,255])" % (np.max(guideimage)) )
+        # guide = (guideimage[:,:,0] + guideimage[:,:,2]) / 2
+
+
+
         if self.is_cropped:
             guide = utils.modulate(guide)             # guided signal modulation
         

@@ -130,7 +130,7 @@ class UpsampleConvLayer(torch.nn.Module):
     
 
 if __name__ == '__main__':
-    train_dataset = RedFlashDataset('C:\\Users\\Michael\\Documents\\COMS-4995-Deep-Learning-Project\\train1\\', True)
+    train_dataset = RedFlashDataset('C:\\Users\\Michael\\Documents\\COMS-4995-Deep-Learning-Project\\training_set\\', True)
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                                batch_size=16,
                                                shuffle=True, num_workers=6)
@@ -143,7 +143,8 @@ if __name__ == '__main__':
     VGG = VGG.to(device)
 
 
-    num_epochs = 600
+    # num_epochs = 600
+    num_epochs = 100
     learning_rate = 1e-4
 
     criterion_img = nn.MSELoss()
@@ -159,7 +160,8 @@ if __name__ == '__main__':
         loss_tol_vgg  = 0
         loss_tol_l2   = 0
         
-        if epoch == 300:
+        # if epoch == 300:
+        if epoch == 50:
             learning_rate = 1e-5
             for param_group in optimizer.param_groups:
                 param_group['lr'] = learning_rate
@@ -201,4 +203,4 @@ if __name__ == '__main__':
         print ( 'Epoch [{}/{}], Training Loss: {:.4f}, vgg Loss: {:.4f}, L2 Loss: {:.4f}' .format(epoch+1, num_epochs, loss_tol, loss_tol_vgg, loss_tol_l2) )
 
     print("--- %0.4f seconds ---" % (time.time() - start_time)) 
-    torch.save(imageFilter.state_dict(), 'MFF-net-rgb-2.ckpt')
+    torch.save(imageFilter.state_dict(), 'MFF-net-dim.ckpt')
